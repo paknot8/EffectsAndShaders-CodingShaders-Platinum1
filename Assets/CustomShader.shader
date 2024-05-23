@@ -33,6 +33,9 @@ Shader "Unlit/CustomShader"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
+            // Define a variable to store the camera distance
+            float _CameraDistance;
+
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -103,9 +106,15 @@ Shader "Unlit/CustomShader"
                 // Generate procedural noise with frequency control
                 float noiseValue = noise(v.uv * _NoiseFrequency * _NoiseScale + _Time.y * _Speed);
 
-                // Displace vertices along the normal direction based on noise
+                // Calculate camera distance
+                _CameraDistance = length(UnityObjectToViewPos(worldPos));
+
+                // Adjust displacement based on camera distance
+                float displacementFactor = 2.0 / (_CameraDistance + 0.01); // Adding a small value to avoid division by zero
+
+                // Displace vertices along the normal direction based on noise and displacement factor
                 float3 normal = normalize(mul((float3x3)unity_ObjectToWorld, v.normal));
-                worldPos.xyz += normal * noiseValue * _Displacement;
+                worldPos.xyz += normal * noiseValue * _Displacement * displacementFactor;
 
                 o.pos = UnityObjectToClipPos(worldPos);
                 o.uv = v.uv;
@@ -149,7 +158,7 @@ Shader "Unlit/CustomShader"
                 float3 reflectDir = reflect(-lightDir, normal);
 
                 float diffuse = max(dot(normal, lightDir), 0);
-                float specular = pow(max(dot(reflectDir,viewDir), 0), _SpecularPower);
+                float specular = pow(max(dot(reflectDir, viewDir), 0), _SpecularPower);
 
                 // Apply shadow mapping
                 float shadowFactor = _ShadowStrength; // Placeholder for shadow strength calculation
@@ -175,3 +184,4 @@ Shader "Unlit/CustomShader"
     }
     FallBack "Diffuse"
 }
+
