@@ -13,6 +13,12 @@ Shader "Unlit/CustomShader"
         _WaveFrequency ("Wave Frequency", Float) = 1.0
         _Speed ("Speed", Float) = 1.0
         _Displacement ("Displacement Amount", Float) = 0.1
+        _SpecularPower ("Specular Power", Range(0.1, 100)) = 10.0 // Specular highlight power
+        _ShadowStrength ("Shadow Strength", Range(0, 1)) = 0.5 // Strength of shadow effect
+        _RefractionStrength ("Refraction Strength", Range(0, 1)) = 0.5 // Strength of refraction effect
+        _ReflectionStrength ("Reflection Strength", Range(0, 1)) = 0.5 // Strength of reflection effect
+        _DistortionScale ("Distortion Scale", Float) = 0.1 // Scale of distortion effect
+        _MouseInteraction ("Mouse Interaction", Float) = 0.0 // Toggle for mouse interaction
     }
     SubShader
     {
@@ -39,6 +45,7 @@ Shader "Unlit/CustomShader"
                 float4 pos : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float4 worldPos : TEXCOORD1;
+                float3 normal : TEXCOORD2;
             };
 
             // Properties
@@ -53,6 +60,12 @@ Shader "Unlit/CustomShader"
             float _WaveFrequency;
             float _Speed;
             float _Displacement;
+            float _SpecularPower;
+            float _ShadowStrength;
+            float _RefractionStrength;
+            float _ReflectionStrength;
+            float _DistortionScale;
+            float _MouseInteraction;
 
             // Noise function
             float noise(float2 uv)
@@ -85,6 +98,7 @@ Shader "Unlit/CustomShader"
                 o.pos = UnityObjectToClipPos(worldPos);
                 o.uv = v.uv;
                 o.worldPos = worldPos;
+                o.normal = mul(unity_ObjectToWorld, v.normal);
                 return o;
             }
 
@@ -96,6 +110,7 @@ Shader "Unlit/CustomShader"
                 // Adjust alpha based on noise value to create transparency effect
                 float alpha = n * _Transparency;
 
+                // Cycle through colors: _
                 // Cycle through colors: _Color1, _Color2, _Color3
                 float t = frac(_Time.y * _ColorChangeSpeed);
                 float3 color;
@@ -116,10 +131,41 @@ Shader "Unlit/CustomShader"
                     color = lerp(_Color3.rgb, _Color1.rgb, (t - 0.66) / 0.34);
                 }
 
-                // Set the final color with adjusted alpha
-                fixed4 finalColor = fixed4(color, alpha);
+                // Apply lighting calculations
+                float3 normal = normalize(i.normal);
+                float3 viewDir = normalize(UnityWorldSpaceViewDir(i.worldPos.xyz));
+                float3 lightDir = float3(0.5, 0.5, -1); // Example directional light direction
+                float3 reflectDir = reflect(-lightDir, normal);
 
-                return finalColor;
+                float diffuse = max(dot(normal, lightDir), 0);
+                float specular = pow(max(dot(reflectDir, viewDir), 0), _SpecularPower);
+
+                // Apply shadow mapping
+                float shadowFactor = _ShadowStrength; // Placeholder for shadow strength calculation
+
+                // Apply reflection and refraction
+                float reflectionFactor = _ReflectionStrength; // Placeholder for reflection strength calculation
+                float refractionFactor = _RefractionStrength; // Placeholder for refraction strength calculation
+
+                // Apply distortion effects
+                float2 distortionUV = i.uv + _Time.y * _DistortionScale;
+                float distortion = noise(distortionUV) * _DistortionScale;
+
+                // Apply mouse interaction
+                if (_MouseInteraction > 0)
+                {
+                    // Example mouse interaction code
+                    float2 mousePos = _MouseInteraction * _Time.xy; // Use mouse position
+                    distortion += noise(distortionUV + mousePos) * _DistortionScale;
+                }
+
+                // Combine lighting, shadow, reflection, and distortion
+                float3 finalColor = color * (diffuse + specular) * (1 - shadowFactor) * (1 - reflectionFactor) * (1 - refractionFactor) + distortion;
+
+                // Set the final color with adjusted alpha
+                fixed4 finalColorWithAlpha = fixed4(finalColor, alpha);
+
+                return finalColorWithAlpha;
             }
             ENDCG
         }
