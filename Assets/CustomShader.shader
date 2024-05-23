@@ -1,3 +1,4 @@
+// Written in CG that is based on HLSL, so it is compatible on different platforms (Unity-Cross-Platform)
 Shader "Unlit/CustomShader"
 {
     Properties
