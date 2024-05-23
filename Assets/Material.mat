@@ -115,7 +115,7 @@ Material:
     - _Glossiness: 0
     - _GlossyReflections: 0
     - _Metallic: 0
-    - _MouseInteraction: 0
+    - _MouseInteraction: 4.29
     - _NoiseFrequency: 1
     - _NoiseScale: 1
     - _OcclusionStrength: 1

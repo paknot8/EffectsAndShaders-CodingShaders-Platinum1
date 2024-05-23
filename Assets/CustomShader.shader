@@ -18,7 +18,6 @@ Shader "Unlit/CustomShader"
         _RefractionStrength ("Refraction Strength", Range(0, 1)) = 0.5 // Strength of refraction effect
         _ReflectionStrength ("Reflection Strength", Range(0, 1)) = 0.5 // Strength of reflection effect
         _DistortionScale ("Distortion Scale", Float) = 0.1 // Scale of distortion effect
-        _MouseInteraction ("Mouse Interaction", Float) = 0.0 // Toggle for mouse interaction
     }
     SubShader
     {
@@ -65,7 +64,6 @@ Shader "Unlit/CustomShader"
             float _RefractionStrength;
             float _ReflectionStrength;
             float _DistortionScale;
-            float _MouseInteraction;
 
             // Noise function
             float noise(float2 uv)
@@ -110,7 +108,6 @@ Shader "Unlit/CustomShader"
                 // Adjust alpha based on noise value to create transparency effect
                 float alpha = n * _Transparency;
 
-                // Cycle through colors: _
                 // Cycle through colors: _Color1, _Color2, _Color3
                 float t = frac(_Time.y * _ColorChangeSpeed);
                 float3 color;
@@ -138,7 +135,7 @@ Shader "Unlit/CustomShader"
                 float3 reflectDir = reflect(-lightDir, normal);
 
                 float diffuse = max(dot(normal, lightDir), 0);
-                float specular = pow(max(dot(reflectDir, viewDir), 0), _SpecularPower);
+                float specular = pow(max(dot(reflectDir,viewDir), 0), _SpecularPower);
 
                 // Apply shadow mapping
                 float shadowFactor = _ShadowStrength; // Placeholder for shadow strength calculation
@@ -150,14 +147,6 @@ Shader "Unlit/CustomShader"
                 // Apply distortion effects
                 float2 distortionUV = i.uv + _Time.y * _DistortionScale;
                 float distortion = noise(distortionUV) * _DistortionScale;
-
-                // Apply mouse interaction
-                if (_MouseInteraction > 0)
-                {
-                    // Example mouse interaction code
-                    float2 mousePos = _MouseInteraction * _Time.xy; // Use mouse position
-                    distortion += noise(distortionUV + mousePos) * _DistortionScale;
-                }
 
                 // Combine lighting, shadow, reflection, and distortion
                 float3 finalColor = color * (diffuse + specular) * (1 - shadowFactor) * (1 - reflectionFactor) * (1 - refractionFactor) + distortion;
