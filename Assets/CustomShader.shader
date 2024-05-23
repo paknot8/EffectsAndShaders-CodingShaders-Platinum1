@@ -110,7 +110,7 @@ Shader "Unlit/CustomShader"
                 _CameraDistance = length(UnityObjectToViewPos(worldPos));
 
                 // Adjust displacement based on camera distance
-                float displacementFactor = 2.0 / (_CameraDistance + 0.01); // Adding a small value to avoid division by zero
+                float displacementFactor = 10.0 / (_CameraDistance + 0.01); // Adding a small value to avoid division by zero
 
                 // Displace vertices along the normal direction based on noise and displacement factor
                 float3 normal = normalize(mul((float3x3)unity_ObjectToWorld, v.normal));
