@@ -68,7 +68,20 @@ Shader "Unlit/CustomShader"
             // Noise function
             float noise(float2 uv)
             {
-                return frac(sin(dot(uv, float2(12.9898, 78.233))) * 43758.5453);
+                // Define magic numbers (predefined constants) used in the noise calculation
+                float2 magicNumbers = float2(12.9898, 78.233);
+
+                // Calculate the dot product of the input UV coordinates and the magic numbers
+                float dotProduct = dot(uv, magicNumbers);
+
+                // Compute the sine of the dot product
+                float sinResult = sin(dotProduct);
+
+                // Scale and clamp the sine result to the range [0, 1] to obtain the noise value
+                float noiseValue = frac(sinResult * 43758.5453);
+
+                // Return the computed noise value
+                return noiseValue;
             }
 
             v2f vert (appdata v)
