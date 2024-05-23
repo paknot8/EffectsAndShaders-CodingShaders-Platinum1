@@ -2,7 +2,9 @@ Shader "Unlit/CustomShader"
 {
     Properties
     {
-        _Color ("Color", Color) = (1,1,1,1)
+        _Color1 ("Color 1", Color) = (1, 1, 0, 1) // Yellow
+        _Color2 ("Color 2", Color) = (1, 0, 1, 1) // Pink
+        _Color3 ("Color 3", Color) = (1, 0, 0, 1) // Red
         _NoiseScale ("Noise Scale", Float) = 1.0
         _NoiseFrequency ("Noise Frequency", Float) = 1.0
         _WaveAmplitude ("Wave Amplitude", Float) = 0.1
@@ -12,11 +14,12 @@ Shader "Unlit/CustomShader"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "Queue" = "Transparent" "RenderType"="Transparent" }
         LOD 200
         
         Pass
         {
+            Blend SrcAlpha OneMinusSrcAlpha
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -37,7 +40,9 @@ Shader "Unlit/CustomShader"
             };
 
             // Properties
-            float4 _Color;
+            float4 _Color1;
+            float4 _Color2;
+            float4 _Color3;
             float _NoiseScale;
             float _NoiseFrequency;
             float _WaveAmplitude;
@@ -84,10 +89,33 @@ Shader "Unlit/CustomShader"
                 // Generate procedural noise with frequency control
                 float n = noise(i.uv * _NoiseFrequency * _NoiseScale + _Time.y * _Speed);
 
-                // Combine noise with base color
-                fixed4 color = _Color * n;
+                // Adjust alpha based on noise value to create transparency effect
+                float alpha = n;
 
-                return color;
+                // Cycle through colors: _Color1, _Color2, _Color3
+                float t = frac(_Time.y);
+                float3 color;
+
+                if (t < 0.33)
+                {
+                    // Interpolate from _Color1 to _Color2
+                    color = lerp(_Color1.rgb, _Color2.rgb, t / 0.33);
+                }
+                else if (t < 0.66)
+                {
+                    // Interpolate from _Color2 to _Color3
+                    color = lerp(_Color2.rgb, _Color3.rgb, (t - 0.33) / 0.33);
+                }
+                else
+                {
+                    // Interpolate from _Color3 to _Color1
+                    color = lerp(_Color3.rgb, _Color1.rgb, (t - 0.66) / 0.34);
+                }
+
+                // Set the final color with adjusted alpha
+                fixed4 finalColor = fixed4(color, alpha);
+
+                return finalColor;
             }
             ENDCG
         }
