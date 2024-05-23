@@ -5,6 +5,8 @@ Shader "Unlit/CustomShader"
         _Color1 ("Color 1", Color) = (1, 1, 0, 1) // Yellow
         _Color2 ("Color 2", Color) = (1, 0, 1, 1) // Pink
         _Color3 ("Color 3", Color) = (1, 0, 0, 1) // Red
+        _Transparency ("Transparency", Range(0, 1)) = 1.0 // Slider to control transparency
+        _ColorChangeSpeed ("Color Change Speed", Float) = 1.0 // Speed of color changing
         _NoiseScale ("Noise Scale", Float) = 1.0
         _NoiseFrequency ("Noise Frequency", Float) = 1.0
         _WaveAmplitude ("Wave Amplitude", Float) = 0.1
@@ -43,6 +45,8 @@ Shader "Unlit/CustomShader"
             float4 _Color1;
             float4 _Color2;
             float4 _Color3;
+            float _Transparency;
+            float _ColorChangeSpeed;
             float _NoiseScale;
             float _NoiseFrequency;
             float _WaveAmplitude;
@@ -90,10 +94,10 @@ Shader "Unlit/CustomShader"
                 float n = noise(i.uv * _NoiseFrequency * _NoiseScale + _Time.y * _Speed);
 
                 // Adjust alpha based on noise value to create transparency effect
-                float alpha = n;
+                float alpha = n * _Transparency;
 
                 // Cycle through colors: _Color1, _Color2, _Color3
-                float t = frac(_Time.y);
+                float t = frac(_Time.y * _ColorChangeSpeed);
                 float3 color;
 
                 if (t < 0.33)
