@@ -4,9 +4,11 @@ Shader "Unlit/CustomShader"
     {
         _Color ("Color", Color) = (1,1,1,1)
         _NoiseScale ("Noise Scale", Float) = 1.0
+        _NoiseFrequency ("Noise Frequency", Float) = 1.0
         _WaveAmplitude ("Wave Amplitude", Float) = 0.1
         _WaveFrequency ("Wave Frequency", Float) = 1.0
         _Speed ("Speed", Float) = 1.0
+        _Displacement ("Displacement Amount", Float) = 0.1
     }
     SubShader
     {
@@ -37,9 +39,11 @@ Shader "Unlit/CustomShader"
             // Properties
             float4 _Color;
             float _NoiseScale;
+            float _NoiseFrequency;
             float _WaveAmplitude;
             float _WaveFrequency;
             float _Speed;
+            float _Displacement;
 
             // Noise function
             float noise(float2 uv)
@@ -51,10 +55,24 @@ Shader "Unlit/CustomShader"
             {
                 v2f o;
                 float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
-                
-                // Apply wave animation
-                worldPos.y += _WaveAmplitude * sin(_WaveFrequency * worldPos.x + _Time.y * _Speed);
-                
+
+                // Calculate time-based phase shift
+                float phase = _Time.y * _Speed;
+
+                // Apply figure-eight motion
+                worldPos.x += sin(phase) * _WaveAmplitude;
+                worldPos.z += sin(2 * phase) * _WaveAmplitude;
+
+                // Apply wave animation to the y-coordinate
+                worldPos.y += _WaveAmplitude * sin(_WaveFrequency * worldPos.x + phase);
+
+                // Generate procedural noise with frequency control
+                float noiseValue = noise(v.uv * _NoiseFrequency * _NoiseScale + _Time.y * _Speed);
+
+                // Displace vertices along the normal direction based on noise
+                float3 normal = normalize(mul((float3x3)unity_ObjectToWorld, v.normal));
+                worldPos.xyz += normal * noiseValue * _Displacement;
+
                 o.pos = UnityObjectToClipPos(worldPos);
                 o.uv = v.uv;
                 o.worldPos = worldPos;
@@ -63,8 +81,8 @@ Shader "Unlit/CustomShader"
 
             fixed4 frag (v2f i) : SV_Target
             {
-                // Generate procedural noise
-                float n = noise(i.uv * _NoiseScale + _Time.y * _Speed);
+                // Generate procedural noise with frequency control
+                float n = noise(i.uv * _NoiseFrequency * _NoiseScale + _Time.y * _Speed);
 
                 // Combine noise with base color
                 fixed4 color = _Color * n;
